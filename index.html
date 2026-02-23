@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EquiScore Pro | Team Edition</title>
+    <title>EquiScore Pro | Fixed Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdf2f8; min-height: 100vh; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .active-tab { background: #fff; color: #6366f1; font-weight: 800; box-shadow: 0 4px 12px rgba(99,102,241,0.12); border-radius: 12px; }
+        .active-tab { background: #fff !important; color: #6366f1 !important; font-weight: 800; box-shadow: 0 4px 12px rgba(99,102,241,0.12); border-radius: 12px; }
         .btn-press:active { transform: scale(0.95); transition: 0.1s; }
         #score-bar { background: linear-gradient(90deg, #6366f1 0%, #a855f7 100%); transition: width 0.8s; }
-        .sort-btn { font-size: 9px; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; border: 1px solid #e2e8f0; transition: 0.2s; background: white; white-space: nowrap; color: #64748b; }
+        .sort-btn { font-size: 9px; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; border: 1px solid #e2e8f0; background: white; white-space: nowrap; color: #64748b; }
         .sort-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
@@ -157,13 +157,13 @@
 
         async function completeTask(id, split = false) {
             const task = state.tasks.find(t => t.id === id);
-            const updateData = { 
+            const awarded = split ? task.points / 2 : task.points;
+            await supabaseClient.from('tasks').update({ 
                 completed: true, 
                 completedBy: split ? 'Together' : state.userName, 
                 timestampCompleted: Date.now(),
-                pointsAwarded: split ? task.points / 2 : task.points 
-            };
-            await supabaseClient.from('tasks').update(updateData).eq('id', id);
+                pointsAwarded: awarded 
+            }).eq('id', id);
             fetchTasks();
         }
 
@@ -193,26 +193,26 @@
             document.getElementById('key-display').innerText = state.householdKey;
             
             let sc = {}; 
-            const pName = state.tasks.find(t => t.creator !== state.userName)?.creator || "Partner";
+            const partnerName = state.tasks.find(t => t.creator !== state.userName)?.creator || "Partner";
             
             state.tasks.filter(t => t.completed).forEach(t => {
                 if(t.completedBy === 'Together') {
-                    sc[state.userName] = (sc[state.userName] || 0) + (t.pointsAwarded || t.points / 2);
-                    sc[pName] = (sc[pName] || 0) + (t.pointsAwarded || t.points / 2);
-                } else {
+                    sc[state.userName] = (sc[state.userName] || 0) + (t.pointsAwarded || t.points/2);
+                    sc[partnerName] = (sc[partnerName] || 0) + (t.pointsAwarded || t.points/2);
+                } else if(t.completedBy) {
                     sc[t.completedBy] = (sc[t.completedBy] || 0) + (t.pointsAwarded || t.points);
                 }
             });
 
             document.getElementById('score-me').innerText = sc[state.userName] || 0;
-            document.getElementById('score-partner').innerText = sc[pName] || 0;
-            const total = (sc[state.userName] || 0) + (sc[pName] || 0);
+            document.getElementById('score-partner').innerText = sc[partnerName] || 0;
+            const total = (sc[state.userName] || 0) + (sc[partnerName] || 0);
             document.getElementById('score-bar').style.width = total === 0 ? '50%' : `${((sc[state.userName] || 0) / total) * 100}%`;
 
             const list = document.getElementById('task-list'); list.innerHTML = '';
             let filtered = state.tasks.filter(t => !t.completed).filter(t => {
-                const mine = t.creator === state.userName;
-                return currentTab === 'my' ? (mine || !t.isPrivate) : (!mine && t.isPrivate);
+                const isMine = t.creator === state.userName;
+                return currentTab === 'my' ? (isMine || !t.isPrivate) : (!isMine && t.isPrivate);
             });
 
             const periodOrder = { 'Daily': 1, 'Weekly': 2, 'Bi-Weekly': 3, 'Monthly': 4 };
@@ -236,10 +236,10 @@
                         <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">${label.text} • ${t.freq} • ${t.points} PTS</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="deleteTask(${t.id})" class="p-2 text-slate-200"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="deleteTask(${t.id})" class="p-2 text-slate-200 hover:text-rose-400"><i class="fa-solid fa-trash-can"></i></button>
                         ${currentTab === 'my' ? `
                             ${!t.isPrivate ? `<button onclick="completeTask(${t.id}, true)" class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center btn-press"><i class="fa-solid fa-people-group"></i></button>` : ''}
-                            <button onclick="completeTask(${t.id})" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center btn-press"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="completeTask(${t.id}, false)" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center btn-press"><i class="fa-solid fa-check"></i></button>
                         ` : ''}
                     </div>
                 `;
@@ -252,11 +252,11 @@
                 hist.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
                     <div class="flex-1">
                         <p class="text-xs font-bold text-slate-700">${t.text}</p>
-                        <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy} • ${dt.toLocaleDateString()} at ${dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p>
+                        <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy} • ${dt.toLocaleDateString()}</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-black text-indigo-600">+${t.pointsAwarded || t.points}</span>
-                        <button onclick="undoTask(${t.id})" class="text-slate-300 hover:text-indigo-500 p-2"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button onclick="undoTask(${t.id})" class="text-slate-300 hover:text-indigo-600 p-2 btn-press"><i class="fa-solid fa-rotate-left"></i></button>
                     </div>
                 </div>`;
             });
@@ -292,10 +292,16 @@
             });
         }
         function toggleColorDropdown() { document.getElementById('color-dropdown').classList.toggle('hidden'); }
-        async function resetAllData() { if(confirm("Wipe all household data?")) { await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); fetchTasks(); } }
+        async function resetAllData() { if(confirm("Wipe all data?")) { await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); fetchTasks(); } }
         function logout() { localStorage.clear(); location.reload(); }
-        function switchTab(t) { currentTab = t; render(); document.getElementById('tab-my').className = t==='my' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; document.getElementById('tab-partner').className = t==='partner' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; }
-
+        function switchTab(t) { 
+            currentTab = t; 
+            document.getElementById('tab-my').classList.toggle('active-tab', t === 'my');
+            document.getElementById('tab-partner').classList.toggle('active-tab', t === 'partner');
+            document.getElementById('tab-my').classList.toggle('text-slate-400', t !== 'my');
+            document.getElementById('tab-partner').classList.toggle('text-slate-400', t !== 'partner');
+            render(); 
+        }
         window.onload = checkLogin;
     </script>
 </body>
