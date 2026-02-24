@@ -16,7 +16,6 @@
         .sort-btn { font-size: 9px; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; border: 1px solid #e2e8f0; transition: 0.2s; background: white; white-space: nowrap; color: #64748b; }
         .sort-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        /* Spinner Animation */
         .spinner { width: 24px; height: 24px; border: 3px solid rgba(99,102,241,0.2); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -105,7 +104,10 @@
             <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
                 <h2 class="text-xl font-extrabold">Settings</h2>
                 <div id="label-config-area" class="space-y-3"></div>
-                <button onclick="resetAllData()" class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] uppercase">Reset All Data</button>
+                <div class="pt-4 border-t border-slate-100 space-y-3">
+                    <button onclick="clearHistory()" class="w-full py-4 bg-amber-50 text-amber-600 rounded-2xl font-bold text-[10px] uppercase">Clear History & Scores</button>
+                    <button onclick="resetAllData()" class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] uppercase">Reset Everything (Wipe All)</button>
+                </div>
                 <button onclick="logout()" class="w-full text-slate-400 font-bold text-[10px] uppercase underline">Logout</button>
                 <button onclick="toggleModal('modal-settings')" class="w-full text-slate-500 font-bold text-[10px] uppercase mt-2">Close</button>
             </div>
@@ -233,6 +235,19 @@
             if(confirm("Delete this chore?")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('id', id); await fetchTasks(); }
         }
 
+        // NEW: Clear History Function
+        async function clearHistory() {
+            if(confirm("Clear victory log and reset scores to 0? Your active chores list will stay.")) {
+                showLoading(true);
+                // We delete rows where completed is true
+                await supabaseClient.from('tasks')
+                    .delete()
+                    .eq('householdKey', state.householdKey)
+                    .eq('completed', true);
+                await fetchTasks();
+            }
+        }
+
         function setSort(mode) {
             state.sortMode = mode;
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -336,7 +351,7 @@
             });
         }
         function toggleColorDropdown() { document.getElementById('color-dropdown').classList.toggle('hidden'); }
-        async function resetAllData() { if(confirm("Wipe all household data?")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); await fetchTasks(); } }
+        async function resetAllData() { if(confirm("Wipe all household data? This will delete all tasks AND history.")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); await fetchTasks(); } }
         function logout() { localStorage.clear(); location.reload(); }
         function switchTab(t) { currentTab = t; render(); document.getElementById('tab-my').className = t==='my' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; document.getElementById('tab-partner').className = t==='partner' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; }
 
