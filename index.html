@@ -3,34 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EquiScore Pro | Verified</title>
+    <title>EquiScore Pro | High Perf</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdf2f8; min-height: 100vh; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .active-tab { background: #fff !important; color: #6366f1 !important; font-weight: 800; box-shadow: 0 4px 12px rgba(99,102,241,0.12); border-radius: 12px; }
-        .btn-press:active { transform: scale(0.95); }
+        .active-tab { background: #fff; color: #6366f1; font-weight: 800; box-shadow: 0 4px 12px rgba(99,102,241,0.12); border-radius: 12px; }
+        .btn-press:active { transform: scale(0.95); transition: 0.1s; }
         #score-bar { background: linear-gradient(90deg, #6366f1 0%, #a855f7 100%); transition: width 0.8s; }
-        .sort-btn { font-size: 9px; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; }
+        .sort-btn { font-size: 9px; font-weight: 800; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; border: 1px solid #e2e8f0; transition: 0.2s; background: white; white-space: nowrap; color: #64748b; }
         .sort-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex flex-col items-center">
 
-    <div id="setup-screen" class="fixed inset-0 bg-[#fdf2f8] z-[2000] hidden flex items-center justify-center p-8">
+    <div id="setup-screen" class="fixed inset-0 bg-[#fdf2f8] z-[1000] hidden flex items-center justify-center p-8">
         <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-10 shadow-2xl space-y-6 text-center">
             <h1 class="text-3xl font-black text-indigo-600 tracking-tighter uppercase">EquiScore</h1>
-            <input id="setup-name" type="text" placeholder="Your Name" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-bold">
-            <input id="setup-key" type="text" placeholder="Household Key" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-bold">
-            <button onclick="finishSetup()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-xl btn-press">Start</button>
+            <div class="space-y-4">
+                <input id="setup-name" type="text" placeholder="Your Name" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-bold">
+                <input id="setup-key" type="text" placeholder="Household Key" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-bold">
+                <button onclick="finishSetup()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase shadow-xl btn-press">Start</button>
+            </div>
         </div>
     </div>
 
     <div id="main-app" class="w-full max-w-2xl min-h-screen flex flex-col bg-white shadow-2xl relative">
-        <header class="p-5 bg-white/80 backdrop-blur-md border-b border-pink-100 flex justify-between items-center sticky top-0 z-50">
+        <header class="p-5 bg-white/80 backdrop-blur-md border-b border-pink-100 flex justify-between items-center sticky top-0 z-40">
             <div>
                 <h1 class="text-xl font-black tracking-tighter bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">EQUISCORE PRO</h1>
                 <div class="flex items-center gap-2 mt-1">
@@ -46,15 +48,15 @@
 
         <section class="p-6 bg-gradient-to-b from-indigo-50/50 to-white">
             <div class="flex justify-between items-end mb-4 font-black">
-                <div class="text-left"><p class="text-[10px] uppercase text-indigo-400">Me</p><h2 id="score-me" class="text-4xl text-slate-800">0</h2></div>
-                <div class="text-right"><p class="text-[10px] uppercase text-purple-400">Partner</p><h2 id="score-partner" class="text-4xl text-slate-800">0</h2></div>
+                <div class="text-left"><p id="label-me" class="text-[10px] uppercase text-indigo-400">Me</p><h2 id="score-me" class="text-4xl text-slate-800">0</h2></div>
+                <div class="text-right"><p id="label-partner" class="text-[10px] uppercase text-purple-400">Partner</p><h2 id="score-partner" class="text-4xl text-slate-800">0</h2></div>
             </div>
             <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-white"><div id="score-bar" class="h-full" style="width: 50%"></div></div>
         </section>
 
-        <nav class="flex bg-slate-50/50 p-1.5 mx-4 mt-2 rounded-2xl border border-slate-100 sticky top-[82px] z-40">
+        <nav class="flex bg-slate-50/50 p-1.5 mx-4 mt-2 rounded-2xl border border-slate-100 sticky top-[82px] z-30">
             <button id="tab-my" onclick="switchTab('my')" class="flex-1 py-3 text-xs uppercase font-extrabold active-tab">My Tasks</button>
-            <button id="tab-partner" onclick="switchTab('partner')" class="flex-1 py-3 text-xs uppercase font-extrabold text-slate-400">Partner</button>
+            <button id="tab-partner" onclick="switchTab('partner')" class="flex-1 py-3 text-xs uppercase font-extrabold text-slate-400">Partner's Tasks</button>
         </nav>
 
         <div class="px-5 mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-2">
@@ -66,12 +68,17 @@
 
         <main id="task-list" class="flex-1 p-4 space-y-4 pb-32"></main>
 
-        <button onclick="toggleModal('modal-task')" class="fixed bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 text-white rounded-2xl shadow-xl flex items-center justify-center text-3xl z-[60] btn-press"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="toggleModal('modal-task')" class="fixed md:absolute bottom-8 right-6 w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 text-white rounded-2xl shadow-xl flex items-center justify-center text-3xl z-50 btn-press"><i class="fa-solid fa-plus"></i></button>
 
-        <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[100] p-6 flex items-center justify-center">
+        <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60] p-6 flex items-center justify-center">
             <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-5 shadow-2xl">
                 <div class="flex justify-between items-center"><h2 class="text-xl font-extrabold">New Chore ✨</h2><button onclick="toggleModal('modal-task')"><i class="fa-solid fa-xmark text-slate-300"></i></button></div>
                 <input id="in-text" type="text" placeholder="What needs doing?" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-medium">
+                <button onclick="toggleColorDropdown()" class="w-full bg-white border rounded-2xl p-4 text-sm flex justify-between items-center font-semibold">
+                    <div class="flex items-center gap-3"><div id="selected-color-circle" class="w-4 h-4 rounded-full bg-blue-500"></div><span id="selected-color-label">Kitchen</span></div>
+                    <i class="fa-solid fa-chevron-up opacity-30"></i>
+                </button>
+                <div id="color-dropdown" class="hidden absolute w-64 bg-white border rounded-2xl z-[70] shadow-2xl max-h-48 overflow-y-auto"></div>
                 <div class="grid grid-cols-2 gap-3">
                     <select id="in-points" class="bg-slate-50 border rounded-2xl p-4 text-sm font-bold"><option value="10">10 Pts</option><option value="20">20 Pts</option><option value="50">50 Pts</option><option value="100">100 Pts</option></select>
                     <select id="in-freq" class="bg-slate-50 border rounded-2xl p-4 text-sm font-bold"><option value="Daily">Daily</option><option value="Weekly">Weekly</option><option value="Bi-Weekly">Bi-Weekly</option><option value="Monthly">Monthly</option></select>
@@ -84,11 +91,21 @@
             </div>
         </div>
 
-        <div id="modal-history" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[100] p-6 flex items-center justify-center">
-            <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl flex flex-col max-h-[80vh]">
-                <h2 class="text-sm font-black text-indigo-500 uppercase text-center mb-4">Victory Log 🏆</h2>
+        <div id="modal-settings" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60] p-6 flex items-center justify-center">
+            <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <h2 class="text-xl font-extrabold">Settings</h2>
+                <div id="label-config-area" class="space-y-3"></div>
+                <button onclick="resetAllData()" class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] uppercase">Reset All Data</button>
+                <button onclick="logout()" class="w-full text-slate-400 font-bold text-[10px] uppercase underline">Logout</button>
+                <button onclick="toggleModal('modal-settings')" class="w-full text-slate-500 font-bold text-[10px] uppercase mt-2">Close</button>
+            </div>
+        </div>
+
+        <div id="modal-history" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60] p-6 flex items-center justify-center">
+            <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-4 shadow-2xl flex flex-col max-h-[80vh]">
+                <h2 class="text-sm font-black text-indigo-500 uppercase text-center">Victory Log 🏆</h2>
                 <div id="history-list" class="flex-1 overflow-y-auto space-y-2"></div>
-                <button onclick="toggleModal('modal-history')" class="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl font-bold text-[10px] uppercase mt-4">Close</button>
+                <button onclick="toggleModal('modal-history')" class="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl font-bold text-[10px] uppercase">Close</button>
             </div>
         </div>
     </div>
@@ -99,7 +116,9 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let state = {
-            tasks: [], userName: localStorage.getItem('es_user') || '', householdKey: localStorage.getItem('es_key') || '',
+            tasks: [], 
+            userName: localStorage.getItem('es_user') || '', 
+            householdKey: localStorage.getItem('es_key') || '',
             sortMode: 'color',
             labels: JSON.parse(localStorage.getItem('es_labels')) || { 
                 blue: { text: 'Kitchen', emoji: '🍳' }, green: { text: 'Cleaning', emoji: '✨' }, 
@@ -123,7 +142,7 @@
             if (n && k) { state.userName = n; state.householdKey = k; localStorage.setItem('es_user', n); localStorage.setItem('es_key', k); checkLogin(); }
         }
 
-        // --- RECURRING LOGIC HELPERS ---
+        // --- RECURRING LOGIC ---
         const getStartOfDay = (date) => {
             const d = new Date(date);
             d.setHours(0, 0, 0, 0);
@@ -145,18 +164,15 @@
                     if (getStartOfDay(now) > getStartOfDay(compDate)) shouldReset = true;
                 } 
                 else if (task.freq === 'Weekly') {
-                    // Find the Sunday 12:00 AM immediately following the completion
                     const nextSun = new Date(compDate);
                     nextSun.setDate(compDate.getDate() + (7 - compDate.getDay()));
                     nextSun.setHours(0, 0, 0, 0);
                     if (nowTs >= nextSun.getTime()) shouldReset = true;
                 } 
                 else if (task.freq === 'Bi-Weekly') {
-                    // 14 days after completion
                     if (nowTs - task.timestampCompleted >= 14 * 24 * 60 * 60 * 1000) shouldReset = true;
                 } 
                 else if (task.freq === 'Monthly') {
-                    // Reset if the month has changed since completion
                     if (now.getMonth() !== compDate.getMonth() || now.getFullYear() !== compDate.getFullYear()) shouldReset = true;
                 }
 
@@ -174,7 +190,6 @@
             const { data } = await supabaseClient.from('tasks').select('*').eq('householdKey', state.householdKey);
             let tasks = data || [];
             
-            // Check if any completed tasks need to be reset based on frequency
             const changed = await processRecurrence(tasks);
             if (changed) {
                 const refreshed = await supabaseClient.from('tasks').select('*').eq('householdKey', state.householdKey);
@@ -188,33 +203,26 @@
         async function addTask(close) {
             const txt = document.getElementById('in-text').value;
             if(!txt) return;
-            await supabaseClient.from('tasks').insert([{ 
-                text: txt, color: tempTask.color, 
-                points: parseInt(document.getElementById('in-points').value), 
-                freq: document.getElementById('in-freq').value, 
-                isPrivate: tempTask.isPrivate, 
-                creator: state.userName, 
-                completed: false, householdKey: state.householdKey 
-            }]);
+            await supabaseClient.from('tasks').insert([{ text: txt, color: tempTask.color, points: parseInt(document.getElementById('in-points').value), freq: document.getElementById('in-freq').value, isPrivate: tempTask.isPrivate, creator: state.userName, completed: false, householdKey: state.householdKey }]);
             document.getElementById('in-text').value = '';
             if(close) toggleModal('modal-task');
             fetchTasks();
         }
 
-        async function completeTask(id, together = false) {
-            await supabaseClient.from('tasks').update({ 
-                completed: true, 
-                completedBy: together ? 'Together' : state.userName, 
-                timestampCompleted: Date.now()
-            }).eq('id', id);
+        async function completeTask(id) {
+            await supabaseClient.from('tasks').update({ completed: true, completedBy: state.userName, timestampCompleted: Date.now() }).eq('id', id);
             fetchTasks();
         }
 
-        async function undoTask(id) {
-            await supabaseClient.from('tasks').update({ 
-                completed: false, completedBy: null, timestampCompleted: null 
-            }).eq('id', id);
-            fetchTasks();
+        async function deleteTask(id) {
+            if(confirm("Delete this chore?")) { await supabaseClient.from('tasks').delete().eq('id', id); fetchTasks(); }
+        }
+
+        function setSort(mode) {
+            state.sortMode = mode;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`sort-${mode}`).classList.add('active');
+            render();
         }
 
         function render() {
@@ -222,41 +230,42 @@
             document.getElementById('key-display').innerText = state.householdKey;
             
             let sc = {}; 
-            const partner = state.tasks.find(t => t.creator !== state.userName)?.creator || "Partner";
-            
-            state.tasks.filter(t => t.completed).forEach(t => {
-                if(t.completedBy === 'Together') {
-                    sc[state.userName] = (sc[state.userName] || 0) + (t.points/2);
-                    sc[partner] = (sc[partner] || 0) + (t.points/2);
-                } else if(t.completedBy) {
-                    sc[t.completedBy] = (sc[t.completedBy] || 0) + t.points;
-                }
-            });
-
+            state.tasks.filter(t => t.completed).forEach(t => sc[t.completedBy] = (sc[t.completedBy] || 0) + t.points);
+            const pName = state.tasks.find(t => t.creator !== state.userName)?.creator || "Partner";
             document.getElementById('score-me').innerText = sc[state.userName] || 0;
-            document.getElementById('score-partner').innerText = sc[partner] || 0;
-            const total = (sc[state.userName] || 0) + (sc[partner] || 0);
+            document.getElementById('score-partner').innerText = sc[pName] || 0;
+            const total = (sc[state.userName] || 0) + (sc[pName] || 0);
             document.getElementById('score-bar').style.width = total === 0 ? '50%' : `${((sc[state.userName] || 0) / total) * 100}%`;
 
             const list = document.getElementById('task-list'); list.innerHTML = '';
             let filtered = state.tasks.filter(t => !t.completed).filter(t => {
-                const isMine = t.creator === state.userName;
-                return currentTab === 'my' ? (isMine || !t.isPrivate) : (!isMine && t.isPrivate);
+                const mine = t.creator === state.userName;
+                return currentTab === 'my' ? (mine || !t.isPrivate) : (!mine && t.isPrivate);
             });
 
+            const periodOrder = { 'Daily': 1, 'Weekly': 2, 'Bi-Weekly': 3, 'Monthly': 4 };
+            if (state.sortMode === 'color') filtered.sort((a,b) => a.color.localeCompare(b.color));
+            if (state.sortMode === 'period') filtered.sort((a,b) => periodOrder[a.freq] - periodOrder[b.freq]);
+            if (state.sortMode === 'privacy') filtered.sort((a,b) => a.isPrivate - b.isPrivate);
+            if (state.sortMode === 'points') filtered.sort((a,b) => b.points - a.points);
+
             filtered.forEach(t => {
+                const colorClass = t.color === 'rose' ? 'pink' : t.color;
+                const label = state.labels[t.color];
                 const card = document.createElement('div');
-                card.className = "p-5 rounded-[2.2rem] bg-white border flex items-center justify-between shadow-sm";
+                card.className = `p-5 rounded-[2.2rem] border-l-[10px] bg-white border border-l-${colorClass}-500 flex items-center justify-between shadow-sm`;
                 card.innerHTML = `
                     <div class="flex-1">
-                        <h3 class="font-bold text-slate-800">${t.text}</h3>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">${t.freq} • ${t.points} PTS</p>
+                        <div class="flex items-center gap-2">
+                            <span>${label.emoji}</span>
+                            <h3 class="font-bold text-slate-800">${t.text}</h3>
+                            <i class="fa-solid ${t.isPrivate ? 'fa-lock text-rose-400' : 'fa-lock-open text-emerald-400'} text-[10px]"></i>
+                        </div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">${label.text} • ${t.freq} • ${t.points} PTS</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        ${currentTab === 'my' ? `
-                            ${!t.isPrivate ? `<button onclick="completeTask(${t.id}, true)" class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-people-group"></i></button>` : ''}
-                            <button onclick="completeTask(${t.id}, false)" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center"><i class="fa-solid fa-check"></i></button>
-                        ` : ''}
+                        <button onclick="deleteTask(${t.id})" class="p-2 text-slate-200"><i class="fa-solid fa-trash-can"></i></button>
+                        ${currentTab === 'my' ? `<button onclick="completeTask(${t.id})" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center"><i class="fa-solid fa-check"></i></button>` : ''}
                     </div>
                 `;
                 list.appendChild(card);
@@ -264,17 +273,52 @@
 
             const hist = document.getElementById('history-list'); hist.innerHTML = '';
             state.tasks.filter(t => t.completed).sort((a,b) => b.timestampCompleted - a.timestampCompleted).forEach(t => {
-                hist.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border">
-                    <div class="flex-1"><p class="text-xs font-bold text-slate-700">${t.text}</p>
-                    <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy}</p></div>
-                    <button onclick="undoTask(${t.id})" class="text-slate-300 p-2"><i class="fa-solid fa-rotate-left"></i></button>
+                const dt = new Date(t.timestampCompleted);
+                hist.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
+                    <div><p class="text-xs font-bold text-slate-700">${t.text}</p>
+                    <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy} • ${dt.toLocaleDateString()} at ${dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p></div>
+                    <span class="text-xs font-black text-indigo-600">+${t.points}</span></div>`;
+            });
+        }
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); if(id === 'modal-settings') renderSettings(); if(id === 'modal-task') renderColorDropdown(); }
+        
+        function renderSettings() {
+            const area = document.getElementById('label-config-area'); area.innerHTML = '';
+            Object.entries(state.labels).forEach(([color, data]) => {
+                area.innerHTML += `<div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl">
+                    <input type="text" value="${data.emoji}" onchange="updateLabel('${color}','emoji',this.value)" class="w-8 bg-transparent text-center outline-none">
+                    <input type="text" value="${data.text}" onchange="updateLabel('${color}','text',this.value)" class="flex-1 bg-transparent font-bold text-sm outline-none">
                 </div>`;
             });
         }
 
-        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        function setPrivacy(p) { tempTask.isPrivate=p; document.getElementById('btn-private').className=p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; document.getElementById('btn-shared').className=!p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; }
-        function switchTab(t) { currentTab = t; render(); }
+        function updateLabel(c,f,v) { state.labels[c][f]=v; localStorage.setItem('es_labels',JSON.stringify(state.labels)); render(); }
+        
+        function setPrivacy(p) { 
+            tempTask.isPrivate=p; 
+            document.getElementById('btn-private').className=p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; 
+            document.getElementById('btn-shared').className=!p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; 
+        }
+
+        function renderColorDropdown() {
+            const con = document.getElementById('color-dropdown'); con.innerHTML = '';
+            Object.entries(state.labels).forEach(([c, d]) => {
+                const i = document.createElement('div'); i.className="p-4 flex items-center gap-3 border-b cursor-pointer active:bg-slate-50"; i.innerHTML=`<div class="w-4 h-4 rounded-full bg-${c==='rose'?'pink':c}-500"></div><span class="font-bold text-slate-700">${d.emoji} ${d.text}</span>`;
+                i.onclick = () => { 
+                    tempTask.color=c; 
+                    document.getElementById('selected-color-circle').className=`w-4 h-4 rounded-full bg-${c==='rose'?'pink':c}-500`; 
+                    document.getElementById('selected-color-label').innerText=d.text; 
+                    toggleColorDropdown();
+                };
+                con.appendChild(i);
+            });
+        }
+        function toggleColorDropdown() { document.getElementById('color-dropdown').classList.toggle('hidden'); }
+        async function resetAllData() { if(confirm("Wipe all household data?")) { await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); fetchTasks(); } }
+        function logout() { localStorage.clear(); location.reload(); }
+        function switchTab(t) { currentTab = t; render(); document.getElementById('tab-my').className = t==='my' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; document.getElementById('tab-partner').className = t==='partner' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; }
+
         window.onload = checkLogin;
     </script>
 </body>
