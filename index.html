@@ -142,20 +142,20 @@
             if (n && k) { state.userName = n; state.householdKey = k; localStorage.setItem('es_user', n); localStorage.setItem('es_key', k); checkLogin(); }
         }
 
-        // --- RECURRING LOGIC ---
         const getStartOfDay = (date) => {
             const d = new Date(date);
             d.setHours(0, 0, 0, 0);
             return d.getTime();
         };
 
+        // OPTIMIZED BATCH RECURRENCE
         async function processRecurrence(tasks) {
             const now = new Date();
             const nowTs = now.getTime();
-            let hasChanges = false;
+            const expiredIds = [];
 
-            for (const task of tasks) {
-                if (!task.completed || !task.timestampCompleted) continue;
+            tasks.forEach(task => {
+                if (!task.completed || !task.timestampCompleted) return;
                 
                 const compDate = new Date(task.timestampCompleted);
                 let shouldReset = false;
@@ -176,20 +176,26 @@
                     if (now.getMonth() !== compDate.getMonth() || now.getFullYear() !== compDate.getFullYear()) shouldReset = true;
                 }
 
-                if (shouldReset) {
-                    hasChanges = true;
-                    await supabaseClient.from('tasks').update({ 
-                        completed: false, completedBy: null, timestampCompleted: null 
-                    }).eq('id', task.id);
-                }
+                if (shouldReset) expiredIds.push(task.id);
+            });
+
+            if (expiredIds.length > 0) {
+                // Batch update: one request instead of many
+                await supabaseClient.from('tasks')
+                    .update({ completed: false, completedBy: null, timestampCompleted: null })
+                    .in('id', expiredIds);
+                return true;
             }
-            return hasChanges;
+            return false;
         }
 
         async function fetchTasks() {
-            const { data } = await supabaseClient.from('tasks').select('*').eq('householdKey', state.householdKey);
+            const { data, error } = await supabaseClient.from('tasks').select('*').eq('householdKey', state.householdKey);
+            if(error) return;
+            
             let tasks = data || [];
             
+            // Speed optimization: Process resets only if needed
             const changed = await processRecurrence(tasks);
             if (changed) {
                 const refreshed = await supabaseClient.from('tasks').select('*').eq('householdKey', state.householdKey);
