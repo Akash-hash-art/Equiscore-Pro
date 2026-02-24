@@ -94,7 +94,7 @@
         <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60] p-6 flex items-center justify-center">
             <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-5 shadow-2xl relative">
                 <div class="flex justify-between items-center"><h2 id="modal-title" class="text-xl font-extrabold">New Chore ✨</h2><button onclick="toggleModal('modal-task')"><i class="fa-solid fa-xmark text-slate-300"></i></button></div>
-                <input id="in-text" type="text" placeholder="What needs doing?" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-medium">
+                <input id="in-text" type="text" placeholder="What's the mission?" class="w-full bg-slate-50 border rounded-2xl p-4 outline-none font-medium">
                 <button onclick="toggleColorDropdown()" class="w-full bg-white border rounded-2xl p-4 text-sm flex justify-between items-center font-semibold">
                     <div class="flex items-center gap-3"><div id="selected-color-circle" class="w-4 h-4 rounded-full bg-blue-500"></div><span id="selected-color-label">Kitchen</span></div>
                     <i class="fa-solid fa-chevron-up opacity-30"></i>
@@ -117,8 +117,8 @@
                 <h2 class="text-xl font-extrabold">Settings</h2>
                 <div id="label-config-area" class="space-y-3"></div>
                 <div class="pt-4 border-t border-slate-100 space-y-3">
-                    <button onclick="clearHistory()" class="w-full py-4 bg-amber-50 text-amber-600 rounded-2xl font-bold text-[10px] uppercase">Reset Scores (Undo All Done)</button>
-                    <button onclick="resetAllData()" class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] uppercase">Reset Everything (Wipe All)</button>
+                    <button onclick="clearHistory()" class="w-full py-4 bg-amber-50 text-amber-600 rounded-2xl font-bold text-[10px] uppercase">Start New Season</button>
+                    <button onclick="resetAllData()" class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-[10px] uppercase">Factory Reset Household</button>
                 </div>
                 <button onclick="logout()" class="w-full text-slate-400 font-bold text-[10px] uppercase underline">Logout</button>
                 <button onclick="toggleModal('modal-settings')" class="w-full text-slate-500 font-bold text-[10px] uppercase mt-2">Close</button>
@@ -221,7 +221,6 @@
             showLoading(false);
         }
 
-        // EDIT & CREATE LOGIC
         function openCreateModal() {
             tempTask.editingId = null;
             document.getElementById('modal-title').innerText = "New Chore ✨";
@@ -302,7 +301,7 @@
         }
 
         async function clearHistory() {
-            if(confirm("Undo all completed tasks? This resets scores to 0 and moves everything back to the active list.")) {
+            if(confirm("Start New Season? This resets scores to 0 and moves all finished chores back to the main view.")) {
                 showLoading(true);
                 await supabaseClient.from('tasks').update({ completed: false, completedBy: null, timestampCompleted: null }).eq('householdKey', state.householdKey).eq('completed', true);
                 await fetchTasks();
@@ -427,7 +426,7 @@
             });
         }
         function toggleColorDropdown() { document.getElementById('color-dropdown').classList.toggle('hidden'); }
-        async function resetAllData() { if(confirm("Wipe all household data? This will delete all tasks AND history.")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); await fetchTasks(); } }
+        async function resetAllData() { if(confirm("Factory Reset Household? This will permanently delete all tasks and history.")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('householdKey', state.householdKey); await fetchTasks(); } }
         function logout() { localStorage.clear(); location.reload(); }
         function switchTab(t) { currentTab = t; render(); document.getElementById('tab-my').className = t==='my' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; document.getElementById('tab-partner').className = t==='partner' ? 'flex-1 py-3 text-xs uppercase font-extrabold active-tab' : 'flex-1 py-3 text-xs uppercase font-extrabold text-slate-400'; }
 
