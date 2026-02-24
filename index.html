@@ -29,6 +29,18 @@
         </div>
     </div>
 
+    <div id="modal-together" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden z-[100] p-6 flex items-center justify-center">
+        <div class="w-full max-w-xs bg-white rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl">
+            <div class="text-4xl">🤝</div>
+            <h2 class="text-xl font-black text-slate-800">Done Together?</h2>
+            <p class="text-xs font-bold text-slate-400 uppercase">Points will be awarded to BOTH of you!</p>
+            <div class="space-y-3">
+                <button id="confirm-together-btn" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase btn-press">Yes, Together!</button>
+                <button id="confirm-solo-btn" class="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase btn-press">No, I did it solo</button>
+            </div>
+        </div>
+    </div>
+
     <div id="setup-screen" class="fixed inset-0 bg-[#fdf2f8] z-[1000] hidden flex items-center justify-center p-8">
         <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-10 shadow-2xl space-y-6 text-center">
             <h1 class="text-3xl font-black text-indigo-600 tracking-tighter uppercase">EquiScore</h1>
@@ -219,9 +231,21 @@
             await fetchTasks();
         }
 
-        async function completeTask(id) {
+        // UPDATED: Logic to handle Solo vs Together
+        async function checkCompletionType(id, isPrivate) {
+            if (isPrivate) {
+                await completeTask(id, state.userName);
+            } else {
+                const modal = document.getElementById('modal-together');
+                modal.classList.remove('hidden');
+                document.getElementById('confirm-together-btn').onclick = () => { modal.classList.add('hidden'); completeTask(id, 'Together'); };
+                document.getElementById('confirm-solo-btn').onclick = () => { modal.classList.add('hidden'); completeTask(id, state.userName); };
+            }
+        }
+
+        async function completeTask(id, user) {
             showLoading(true);
-            await supabaseClient.from('tasks').update({ completed: true, completedBy: state.userName, timestampCompleted: Date.now() }).eq('id', id);
+            await supabaseClient.from('tasks').update({ completed: true, completedBy: user, timestampCompleted: Date.now() }).eq('id', id);
             await fetchTasks();
         }
 
@@ -235,14 +259,10 @@
             if(confirm("Delete this chore?")) { showLoading(true); await supabaseClient.from('tasks').delete().eq('id', id); await fetchTasks(); }
         }
 
-        // UPDATED: clearHistory now resets "completed" to false for all tasks
         async function clearHistory() {
             if(confirm("Undo all completed tasks? This resets scores to 0 and moves everything back to the active list.")) {
                 showLoading(true);
-                await supabaseClient.from('tasks')
-                    .update({ completed: false, completedBy: null, timestampCompleted: null })
-                    .eq('householdKey', state.householdKey)
-                    .eq('completed', true);
+                await supabaseClient.from('tasks').update({ completed: false, completedBy: null, timestampCompleted: null }).eq('householdKey', state.householdKey).eq('completed', true);
                 await fetchTasks();
             }
         }
@@ -259,8 +279,17 @@
             document.getElementById('key-display').innerText = state.householdKey;
             
             let sc = {}; 
-            state.tasks.filter(t => t.completed).forEach(t => sc[t.completedBy] = (sc[t.completedBy] || 0) + t.points);
             const pName = state.tasks.find(t => t.creator !== state.userName)?.creator || "Partner";
+            
+            state.tasks.filter(t => t.completed).forEach(t => {
+                if (t.completedBy === 'Together') {
+                    sc[state.userName] = (sc[state.userName] || 0) + t.points;
+                    sc[pName] = (sc[pName] || 0) + t.points;
+                } else {
+                    sc[t.completedBy] = (sc[t.completedBy] || 0) + t.points;
+                }
+            });
+
             document.getElementById('score-me').innerText = sc[state.userName] || 0;
             document.getElementById('score-partner').innerText = sc[pName] || 0;
             const total = (sc[state.userName] || 0) + (sc[pName] || 0);
@@ -294,7 +323,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="deleteTask(${t.id})" class="p-2 text-slate-200"><i class="fa-solid fa-trash-can"></i></button>
-                        ${currentTab === 'my' ? `<button onclick="completeTask(${t.id})" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center"><i class="fa-solid fa-check"></i></button>` : ''}
+                        ${currentTab === 'my' ? `<button onclick="checkCompletionType(${t.id}, ${t.isPrivate})" class="w-12 h-12 bg-indigo-600 text-white rounded-2xl shadow-lg flex items-center justify-center"><i class="fa-solid fa-check"></i></button>` : ''}
                     </div>
                 `;
                 list.appendChild(card);
@@ -306,7 +335,7 @@
                 hist.innerHTML += `<div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
                     <div class="flex-1">
                         <p class="text-xs font-bold text-slate-700">${t.text}</p>
-                        <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy} • ${dt.toLocaleDateString()}</p>
+                        <p class="text-[9px] font-bold text-indigo-400 uppercase">${t.completedBy === 'Together' ? '🤝 Together' : t.completedBy} • ${dt.toLocaleDateString()}</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-black text-indigo-600">+${t.points}</span>
