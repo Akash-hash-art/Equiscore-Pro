@@ -126,9 +126,28 @@
         </div>
 
         <div id="modal-history" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60] p-6 flex items-center justify-center">
-            <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-4 shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="w-full max-w-sm bg-white rounded-[2.5rem] p-8 space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
                 <h2 class="text-sm font-black text-indigo-500 uppercase text-center">Victory Log 🏆</h2>
-                <div id="history-list" class="flex-1 overflow-y-auto space-y-2"></div>
+                
+                <div id="weekly-snapshot" class="bg-indigo-600 rounded-3xl p-5 text-white shadow-inner">
+                    <p class="text-[9px] font-black uppercase tracking-widest opacity-70 mb-3">Last 7 Days</p>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white/10 p-2 rounded-2xl">
+                            <p id="snap-points" class="text-lg font-black">0</p>
+                            <p class="text-[7px] uppercase font-bold opacity-80">Total Pts</p>
+                        </div>
+                        <div class="bg-white/10 p-2 rounded-2xl">
+                            <p id="snap-leader" class="text-lg font-black">-</p>
+                            <p class="text-[7px] uppercase font-bold opacity-80">Leader</p>
+                        </div>
+                        <div class="bg-white/10 p-2 rounded-2xl">
+                            <p id="snap-together" class="text-lg font-black">0</p>
+                            <p class="text-[7px] uppercase font-bold opacity-80">🤝 Done</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
                 <button onclick="toggleModal('modal-history')" class="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl font-bold text-[10px] uppercase">Close</button>
             </div>
         </div>
@@ -249,34 +268,16 @@
             const txt = document.getElementById('in-text').value;
             if(!txt) return;
             showLoading(true);
-            
-            const payload = {
-                text: txt,
-                color: tempTask.color,
-                points: parseInt(document.getElementById('in-points').value),
-                freq: document.getElementById('in-freq').value,
-                isPrivate: tempTask.isPrivate
-            };
-
-            if (tempTask.editingId) {
-                await supabaseClient.from('tasks').update(payload).eq('id', tempTask.editingId);
-            } else {
-                await supabaseClient.from('tasks').insert([{ 
-                    ...payload, 
-                    creator: state.userName, 
-                    completed: false, 
-                    householdKey: state.householdKey 
-                }]);
-            }
-            
+            const payload = { text: txt, color: tempTask.color, points: parseInt(document.getElementById('in-points').value), freq: document.getElementById('in-freq').value, isPrivate: tempTask.isPrivate };
+            if (tempTask.editingId) { await supabaseClient.from('tasks').update(payload).eq('id', tempTask.editingId); }
+            else { await supabaseClient.from('tasks').insert([{ ...payload, creator: state.userName, completed: false, householdKey: state.householdKey }]); }
             toggleModal('modal-task');
             await fetchTasks();
         }
 
         async function checkCompletionType(id, isPrivate) {
-            if (isPrivate) {
-                await completeTask(id, state.userName);
-            } else {
+            if (isPrivate) { await completeTask(id, state.userName); }
+            else {
                 const modal = document.getElementById('modal-together');
                 modal.classList.remove('hidden');
                 document.getElementById('confirm-together-btn').onclick = () => { modal.classList.add('hidden'); completeTask(id, 'Together'); };
@@ -371,6 +372,34 @@
                 list.appendChild(card);
             });
 
+            // Weekly Summary Calculation
+            const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            const weeklyTasks = state.tasks.filter(t => t.completed && t.timestampCompleted >= sevenDaysAgo);
+            
+            let weeklyTotal = 0;
+            let togetherCount = 0;
+            let weeklyScores = {};
+            
+            weeklyTasks.forEach(t => {
+                weeklyTotal += t.points;
+                if (t.completedBy === 'Together') {
+                    togetherCount++;
+                    weeklyScores[state.userName] = (weeklyScores[state.userName] || 0) + t.points;
+                    weeklyScores[pName] = (weeklyScores[pName] || 0) + t.points;
+                } else {
+                    weeklyScores[t.completedBy] = (weeklyScores[t.completedBy] || 0) + t.points;
+                }
+            });
+
+            let leader = "-";
+            if (Object.keys(weeklyScores).length > 0) {
+                leader = Object.entries(weeklyScores).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+            }
+
+            document.getElementById('snap-points').innerText = weeklyTotal;
+            document.getElementById('snap-leader').innerText = leader === state.userName ? "Me" : leader;
+            document.getElementById('snap-together').innerText = togetherCount;
+
             const hist = document.getElementById('history-list'); hist.innerHTML = '';
             state.tasks.filter(t => t.completed).sort((a,b) => b.timestampCompleted - a.timestampCompleted).forEach(t => {
                 const dt = new Date(t.timestampCompleted);
@@ -388,7 +417,6 @@
         }
 
         function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); if(id === 'modal-settings') renderSettings(); if(id === 'modal-task') renderColorDropdown(); }
-        
         function renderSettings() {
             const area = document.getElementById('label-config-area'); area.innerHTML = '';
             Object.entries(state.labels).forEach(([color, data]) => {
@@ -398,30 +426,14 @@
                 </div>`;
             });
         }
-
         function updateLabel(c,f,v) { state.labels[c][f]=v; localStorage.setItem('es_labels',JSON.stringify(state.labels)); render(); }
-        
-        function setPrivacy(p) { 
-            tempTask.isPrivate=p; 
-            document.getElementById('btn-private').className=p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; 
-            document.getElementById('btn-shared').className=!p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; 
-        }
-
-        function updateColorDropdownSelection(c) {
-            tempTask.color = c;
-            const d = state.labels[c];
-            document.getElementById('selected-color-circle').className=`w-4 h-4 rounded-full bg-${c==='rose'?'pink':c}-500`; 
-            document.getElementById('selected-color-label').innerText=d.text; 
-        }
-
+        function setPrivacy(p) { tempTask.isPrivate=p; document.getElementById('btn-private').className=p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; document.getElementById('btn-shared').className=!p?'flex-1 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm':'flex-1 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400'; }
+        function updateColorDropdownSelection(c) { tempTask.color = c; const d = state.labels[c]; document.getElementById('selected-color-circle').className=`w-4 h-4 rounded-full bg-${c==='rose'?'pink':c}-500`; document.getElementById('selected-color-label').innerText=d.text; }
         function renderColorDropdown() {
             const con = document.getElementById('color-dropdown'); con.innerHTML = '';
             Object.entries(state.labels).forEach(([c, d]) => {
                 const i = document.createElement('div'); i.className="p-4 flex items-center gap-3 border-b cursor-pointer active:bg-slate-50"; i.innerHTML=`<div class="w-4 h-4 rounded-full bg-${c==='rose'?'pink':c}-500"></div><span class="font-bold text-slate-700">${d.emoji} ${d.text}</span>`;
-                i.onclick = () => { 
-                    updateColorDropdownSelection(c);
-                    toggleColorDropdown();
-                };
+                i.onclick = () => { updateColorDropdownSelection(c); toggleColorDropdown(); };
                 con.appendChild(i);
             });
         }
